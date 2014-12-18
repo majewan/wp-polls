@@ -46,6 +46,8 @@ $wpdb->pollsq   = $wpdb->prefix.'pollsq';
 $wpdb->pollsa   = $wpdb->prefix.'pollsa';
 $wpdb->pollsip  = $wpdb->prefix.'pollsip';
 
+### Add support for WP-API plugin
+require_once('polls-wp-api.php');
 
 ### Function: Poll Administration Menu
 add_action( 'admin_menu', 'poll_menu' );
