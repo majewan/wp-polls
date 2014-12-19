@@ -71,7 +71,7 @@ class WP_Polls_API_Poll {
 
     $user_answers = array();
     if($user_ID > 0){
-      $user_answers = $wpdb->get_results("SELECT pollip_aid FROM $wpdb->pollsip WHERE pollip_userid = $user_ID AND pollip_qid = $poll_id");
+      $user_answers = $wpdb->get_col("SELECT pollip_aid FROM $wpdb->pollsip WHERE pollip_userid = $user_ID AND pollip_qid = $poll_id");
     }
     // Get Poll Answers Data
     $poll_answers = $wpdb->get_results("SELECT polla_aid, polla_answers, polla_votes FROM $wpdb->pollsa WHERE polla_qid = $poll_id ORDER BY ".get_option('poll_ans_result_sortby').' '.get_option('poll_ans_result_sortorder'));
