@@ -51,7 +51,7 @@ class WP_Polls_API_Poll {
     $poll_question = $wpdb->get_row("SELECT pollq_id, pollq_question, pollq_totalvotes, pollq_active, pollq_timestamp, pollq_expiry, pollq_multiple, pollq_totalvoters FROM $wpdb->pollsq WHERE pollq_id = $poll_id LIMIT 1");
     // No poll could be loaded from the database
     if (!$poll_question) {
-      return new WP_Error( 'json_poll_invalid', sprintf(__('Invalid Poll ID. Poll ID #%s', 'wp-polls'), $poll_id));
+      return new WP_Error( 'json_poll_invalid', sprintf(__('Invalid Poll ID. Poll ID #%s', 'wp-polls'), $poll_id), array( 'status' => 400 ));
     }
     // Poll Question Variables
     $poll_data = array();
@@ -72,6 +72,10 @@ class WP_Polls_API_Poll {
     $user_answers = array();
     if($user_ID > 0){
       $user_answers = $wpdb->get_results("SELECT pollip_aid FROM $wpdb->pollsip WHERE pollip_userid = $user_ID AND pollip_qid = $poll_id");
+      var_dump($user_answers);
+    }
+    if(count($user_answers) > 0){
+      $poll_data['user_already_vote'] = true;
     }
     // Get Poll Answers Data
     $poll_answers = $wpdb->get_results("SELECT polla_aid, polla_answers, polla_votes FROM $wpdb->pollsa WHERE polla_qid = $poll_id ORDER BY ".get_option('poll_ans_result_sortby').' '.get_option('poll_ans_result_sortorder'));
@@ -147,7 +151,9 @@ class WP_Polls_API_Poll {
     $poll_id = $id;
     $poll_aid_array = $data['poll_answers'];
     if(!is_array($poll_aid_array)) $poll_aid_array = array($data['poll_answers']);
-
+    if(!($user_ID > 0)){
+      return new WP_Error( 'json_not_logged_in', 'You are not currently logged in.', array( 'status' => 401 ) );
+    }
     if($poll_id > 0 && !empty($poll_aid_array) && check_allowtovote()) {
       $is_poll_open = intval( $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $wpdb->pollsq WHERE pollq_id = %d AND pollq_active = 1", $poll_id ) ) );
       if ( $is_poll_open > 0 ) {
@@ -187,18 +193,18 @@ class WP_Polls_API_Poll {
               $wpdb->query("INSERT INTO $wpdb->pollsip VALUES (0, $poll_id, $polla_aid, '$pollip_ip', '$pollip_host', '$pollip_timestamp', '$pollip_user', $pollip_userid)");
             }
             //echo display_pollresult($poll_id, $poll_aid_array, false);
-            return array( 'success' => true);
+            return get_poll($poll_id);
           } else {
-            return new WP_Error( 'json_poll_total_error', sprintf(__('Unable To Update Poll Total Votes And Poll Total Voters. Poll ID #%s', 'wp-polls'), $poll_id));
+            return new WP_Error( 'json_poll_total_error', sprintf(__('Unable To Update Poll Total Votes And Poll Total Voters. Poll ID #%s', 'wp-polls'), $poll_id), array( 'status' => 500 ));
           } // End if($vote_a)
         } else {
-          return new WP_Error( 'json_poll_already_vote', sprintf(__('You Had Already Voted For This Poll. Poll ID #%s', 'wp-polls'), $poll_id));
+          return new WP_Error( 'json_poll_already_vote', sprintf(__('You Had Already Voted For This Poll. Poll ID #%s', 'wp-polls'), $poll_id), array( 'status' => 400 ));
         } // End if($check_voted)
       } else {
-        return new WP_Error( 'json_poll_closed', sprintf( __( 'Poll ID #%s is closed', 'wp-polls' ), $poll_id ));
+        return new WP_Error( 'json_poll_closed', sprintf( __( 'Poll ID #%s is closed', 'wp-polls' ), $poll_id ), array( 'status' => 400 ));
       }  // End if($is_poll_open > 0)
     } else {
-      return new WP_Error( 'json_poll_invalid', sprintf(__('Invalid Poll ID. Poll ID #%s', 'wp-polls'), $poll_id));
+      return new WP_Error( 'json_poll_invalid', sprintf(__('Invalid Poll ID. Poll ID #%s', 'wp-polls'), $poll_id), array( 'status' => 400 ));
     } // End if($poll_id > 0 && !empty($poll_aid_array) && check_allowtovote())
   }
 }
