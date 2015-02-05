@@ -24,9 +24,19 @@ class WP_Polls_API_Poll {
 		return $routes;
 	}
 
-  public function get_polls(){
+  public function get_polls( $filter = array() ){
     global $wpdb;
-    $polls = $wpdb->get_results("SELECT pollq_id FROM $wpdb->pollsq  ORDER BY pollq_timestamp DESC");
+
+    if(isset($filter['include'])){
+      if(!is_array($filter['include'])){
+        $filter['include'] = json_decode($filter['include']);
+      }
+      $sql_query = call_user_func_array(array($wpdb, 'prepare'), array_merge(array("SELECT pollq_id FROM $wpdb->pollsq WHERE pollq_id IN (".str_repeat('%d,', count($filter['include']) - 1) .'%d) ORDER BY pollq_timestamp DESC'), $filter['include']));
+    }else{
+      $sql_query = "SELECT pollq_id FROM $wpdb->pollsq ORDER BY pollq_timestamp DESC";
+    }
+
+    $polls = $wpdb->get_results($sql_query);
 
     $struct = array();
     foreach($polls as $poll){
