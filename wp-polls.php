@@ -1630,7 +1630,7 @@ function widget_polls_init() {
 
 
 ### Function: Activate Plugin
-register_activation_hook( __FILE__, 'polls_activation' );
+register_activation_hook( WP_PLUGIN_DIR . '/wp-polls/wp-polls.php', 'polls_activation' );
 function polls_activation( $network_wide )
 {
 	if ( is_multisite() && $network_wide )
